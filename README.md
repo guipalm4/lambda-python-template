@@ -1,7 +1,5 @@
 # 🚀 Lambda Python Template
 
-Template **ultra simples** para AWS Lambda em Python com **logs estruturados** e **rastreabilidade completa**.
-
 ## 📋 Índice
 
 - [🚀 Início Rápido](#-início-rápido)
@@ -21,6 +19,76 @@ Template **ultra simples** para AWS Lambda em Python com **logs estruturados** e
 - Python 3.12+
 - AWS CLI configurado
 - SAM CLI instalado
+
+### 📦 Instalação dos Pré-requisitos
+
+#### 1. **Python 3.12+**
+
+```bash
+# macOS (usando Homebrew)
+brew install python@3.12
+
+# Ubuntu/Debian
+sudo apt update
+sudo apt install python3.12 python3.12-pip
+
+# Windows (baixar do site oficial)
+# https://www.python.org/downloads/
+```
+
+#### 2. **AWS CLI**
+
+```bash
+# macOS
+brew install awscli
+
+# Linux (usando pip)
+pip install awscli
+
+# Windows (usando pip)
+pip install awscli
+
+# Ou usar o instalador oficial:
+# https://aws.amazon.com/cli/
+```
+
+**Configurar AWS CLI:**
+
+```bash
+# Configuração interativa
+aws configure
+
+# Será solicitado:
+# AWS Access Key ID: sua-access-key
+# AWS Secret Access Key: sua-secret-key
+# Default region name: us-east-1 (ou sua região preferida)
+# Default output format: json
+```
+
+#### 3. **SAM CLI**
+
+```bash
+# macOS
+brew install aws-sam-cli
+
+# Linux (usando pip)
+pip install aws-sam-cli
+
+# Windows (usando pip)
+pip install aws-sam-cli
+
+# Ou usar os instaladores oficiais:
+# https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html
+```
+
+**Verificar instalações:**
+
+```bash
+# Verificar versões
+python3 --version    # Python 3.12+
+aws --version       # aws-cli/2.x.x
+sam --version       # SAM CLI, version 1.x.x
+```
 
 ### Setup em 2 minutos
 
@@ -340,6 +408,8 @@ aws logs filter-log-events \
 | **Imports não encontrados**     | Execute `make install`                        |
 | **Logs não aparecem**           | Configure `LOG_LEVEL=DEBUG`                   |
 | **Trace ID não aparece**        | Verifique se está usando `handler.py` correto |
+| **AWS CLI não configurado**     | Execute `aws configure`                       |
+| **SAM CLI não instalado**       | Siga instruções de instalação acima           |
 
 ## 📖 Exemplos
 
@@ -417,11 +487,13 @@ curl -X PUT http://localhost:3000/usuarios/123 \
 
 ## 🎯 Próximos Passos
 
-1. **Customize** `src/handler.py` com sua lógica
-2. **Adicione testes** em `tests/test_handler.py`
-3. **Configure** variáveis de ambiente no `template.yaml`
-4. **Teste localmente** com `make local`
-5. **Deploy** com `make deploy`
+1. **Instale os pré-requisitos** (Python, AWS CLI, SAM CLI)
+2. **Configure AWS CLI** com suas credenciais
+3. **Customize** `src/handler.py` com sua lógica
+4. **Adicione testes** em `tests/test_handler.py`
+5. **Configure** variáveis de ambiente no `template.yaml`
+6. **Teste localmente** com `make local`
+7. **Deploy** com `make deploy`
 
 ## 💡 Dicas Importantes
 
