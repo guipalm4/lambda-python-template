@@ -1,0 +1,4 @@
+boto3==1.26.135
+aws-lambda-powertools==2.15.0
+requests==2.28.2
+python-json-logger==2.0.7
