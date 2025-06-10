@@ -7,6 +7,10 @@ Parameters:
     Type: String
     Default: dev
     AllowedValues: [dev, prod]
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues: [DEBUG, INFO, WARNING, ERROR]
 
 Globals:
   Function:
@@ -18,8 +22,9 @@ Globals:
     Environment:
       Variables:
         ENVIRONMENT: !Ref Environment
+        LOG_LEVEL: !Ref LogLevel
         POWERTOOLS_SERVICE_NAME: my-lambda
-        POWERTOOLS_LOG_LEVEL: INFO
+        POWERTOOLS_LOGGER_LOG_EVENT: true
 
 Resources:
   MyFunction:
