@@ -20,8 +20,6 @@ Globals:
         ENVIRONMENT: !Ref Environment
         POWERTOOLS_SERVICE_NAME: my-lambda
         POWERTOOLS_LOG_LEVEL: INFO
-    Layers:
-      - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:81
 
 Resources:
   MyFunction:
