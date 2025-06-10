@@ -1,92 +1,57 @@
 import json
-import traceback
+import os
 from typing import Any, Dict
 
-from src.config import Config
-from src.exceptions import BusinessException
-from src.utils.logger import get_logger
+from aws_lambda_powertools import Logger, Tracer
+from aws_lambda_powertools.utilities.typing import LambdaContext
 
-logger = get_logger()
+# Simple configuration
+logger = Logger()
+tracer = Tracer()
 
-def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    """
-    Main Lambda handler function
-    
-    Args:
-        event: AWS Lambda event
-        context: AWS Lambda context
-    
-    Returns:
-        Response dictionary
-    """
-    request_id = context.aws_request_id
-    logger.info("Lambda invocation started", extra={
-        "request_id": request_id,
-        "event_type": event.get("type", "unknown")
-    })
-    
+
+@logger.inject_lambda_context
+@tracer.capture_lambda_handler
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
+    """Função principal do Lambda"""
     try:
-        # Parse input
-        logger.debug("Processing event", extra={"event": event})
+        logger.info("Processing request", method=event.get("httpMethod"))
         
-        # Process business logic
-        result = process_event(event)
+        # Sua lógica aqui
+        result = process_request(event)
         
-        # Prepare response
-        response = {
-            "statusCode": 200,
-            "body": json.dumps(result),
-            "headers": {
-                "Content-Type": "application/json",
-                "X-Request-ID": request_id
-            }
-        }
+        return create_response(200, result)
         
-        logger.info("Lambda invocation completed successfully", extra={
-            "request_id": request_id,
-            "execution_time_ms": context.get_remaining_time_in_millis()
-        })
-        
-        return response
-        
-    except BusinessException as be:
-        logger.warning(f"Business exception: {str(be)}", extra={
-            "request_id": request_id,
-            "error_type": be.__class__.__name__
-        })
-        return {
-            "statusCode": 400,
-            "body": json.dumps({"error": str(be), "type": "business_error"}),
-            "headers": {
-                "Content-Type": "application/json",
-                "X-Request-ID": request_id
-            }
-        }
+    except ValueError as e:
+        logger.warning("Validation error", error=str(e))
+        return create_response(400, {"error": str(e)})
         
     except Exception as e:
-        logger.error(f"Unhandled exception: {str(e)}", extra={
-            "request_id": request_id,
-            "error_type": e.__class__.__name__,
-            "traceback": traceback.format_exc()
-        })
-        return {
-            "statusCode": 500,
-            "body": json.dumps({"error": "Internal server error", "request_id": request_id}),
-            "headers": {
-                "Content-Type": "application/json",
-                "X-Request-ID": request_id
-            }
-        }
+        logger.error("Unexpected error", error=str(e))
+        return create_response(500, {"error": "Internal server error"})
 
-def process_event(event: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Process the Lambda event
+
+@tracer.capture_method
+def process_request(event: Dict[str, Any]) -> Dict[str, Any]:
+    """Processa a requisição do Lambda"""
+    if not event:
+        raise ValueError("Event cannot be empty")
     
-    Args:
-        event: AWS Lambda event
-    
-    Returns:
-        Processed result
-    """
-    # Implement your business logic here
-    return {"message": "Hello from Lambda!"}
+    # Sua lógica de negócio aqui
+    return {
+        "message": "Success!",
+        "data": event.get("body", {}),
+        "environment": os.getenv("ENVIRONMENT", "dev")
+    }
+
+
+def create_response(status: int, data: Any) -> Dict[str, Any]:
+    """Cria resposta padronizada"""
+    return {
+        "statusCode": status,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+        },
+        "body": json.dumps(data, ensure_ascii=False)
+    }

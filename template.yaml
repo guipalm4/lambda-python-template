@@ -1,71 +1,42 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: Python Lambda Template
+Description: Simple Lambda Python Template
 
 Parameters:
   Environment:
     Type: String
     Default: dev
-    AllowedValues:
-      - dev
-      - test
-      - staging
-      - prod
-    Description: Deployment environment
-
-  LogLevel:
-    Type: String
-    Default: INFO
-    AllowedValues:
-      - DEBUG
-      - INFO
-      - WARNING
-      - ERROR
-    Description: Log level for the Lambda function
+    AllowedValues: [dev, prod]
 
 Globals:
   Function:
     Timeout: 30
-    MemorySize: 128
-    Runtime: python3.9
-    Architectures:
-      - x86_64
+    MemorySize: 256
+    Runtime: python3.12
+    Architectures: [arm64]
     Tracing: Active
     Environment:
       Variables:
         ENVIRONMENT: !Ref Environment
-        LOG_LEVEL: !Ref LogLevel
+        POWERTOOLS_SERVICE_NAME: my-lambda
+        POWERTOOLS_LOG_LEVEL: INFO
+    Layers:
+      - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:81
 
 Resources:
-  LambdaFunction:
+  MyFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./
       Handler: src.handler.lambda_handler
-      Description: Python Lambda Template
-      Tags:
-        Environment: !Ref Environment
-        Project: PythonLambdaTemplate
-      Policies:
-        - AWSLambdaBasicExecutionRole
       Events:
-        ApiEvent:
+        Api:
           Type: Api
           Properties:
-            Path: /example
-            Method: post
-
-  LambdaLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /aws/lambda/${LambdaFunction}
-      RetentionInDays: 30
+            Path: /{proxy+}
+            Method: ANY
 
 Outputs:
-  LambdaFunction:
-    Description: Lambda Function ARN
-    Value: !GetAtt LambdaFunction.Arn
-
-  ApiEndpoint:
-    Description: API Gateway endpoint URL
-    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/example
+  ApiUrl:
+    Description: API Gateway URL
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

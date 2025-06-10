@@ -1,51 +1,29 @@
-.PHONY: help clean install test lint format deploy-dev deploy-prod
+.PHONY: help install test format clean deploy local
 
-help:
-	@echo "Available commands:"
-	@echo "  make install        Install dependencies"
-	@echo "  make install-dev    Install development dependencies"
-	@echo "  make test           Run tests"
-	@echo "  make lint           Run linters"
-	@echo "  make format         Format code"
-	@echo "  make clean          Clean build artifacts"
-	@echo "  make build          Build SAM application"
-	@echo "  make deploy-dev     Deploy to development"
-	@echo "  make deploy-prod    Deploy to production"
+help: ## Mostra comandos
+   @grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-clean:
-	rm -rf .pytest_cache
-	rm -rf .coverage
-	rm -rf htmlcov
-	rm -rf .mypy_cache
-	rm -rf .aws-sam
-	rm -rf __pycache__
-	find . -type d -name __pycache__ -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
+install: ## Instala dependências
+	@echo "📦 Instalando..."
+	pip install -r requirements.txt -r requirements-dev.txt
 
-install:
-	pip install -r requirements.txt
+test: ## Executa testes
+	@echo "🧪 Testando..."
+	PYTHONPATH=. pytest tests/ -v --cov=src
 
-install-dev: install
-	pip install -r requirements-dev.txt
-	pre-commit install
+format: ## Formata código
+	@echo "🎨 Formatando..."
+	black src/ tests/
 
-test:
-	pytest tests/ --cov=src --cov-report=term-missing
+clean: ## Limpa arquivos
+	@echo "🧹 Limpando..."
+	rm -rf .pytest_cache htmlcov .coverage __pycache__
+	find . -name "__pycache__" -delete
 
-lint:
-	flake8 src tests
-	mypy src
-	bandit -r src/
+deploy: ## Deploy na AWS
+	@echo "🚀 Deploy..."
+	sam build && sam deploy --guided
 
-format:
-	isort src tests
-	black src tests
-
-build:
-	sam build
-
-deploy-dev:
-	sam deploy --stack-name python-lambda-dev --parameter-overrides Environment=dev --no-confirm-changeset
-
-deploy-prod:
-	sam deploy --stack-name python-lambda-prod --parameter-overrides Environment=prod --no-confirm-changeset
+local: ## API local
+	@echo "🌐 Iniciando local..."
+	sam build && sam local start-api --port 3000
