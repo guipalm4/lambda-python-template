@@ -10,7 +10,7 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 logger = Logger(
     service="my-lambda",
     level=os.getenv("LOG_LEVEL", "INFO"),
-    log_uncaught_exceptions=True
+    log_uncaught_exceptions=True,
 )
 tracer = Tracer()
 
@@ -21,7 +21,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
     """Função principal do Lambda"""
     # Gerar trace_id único para rastreabilidade
     trace_id = str(uuid.uuid4())[:8]
-    
+
     # Log de entrada com dados estruturados
     logger.info(
         "Request started",
@@ -30,26 +30,26 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
             "method": event.get("httpMethod"),
             "path": event.get("path"),
             "user_agent": event.get("headers", {}).get("User-Agent"),
-            "ip": event.get("requestContext", {}).get("identity", {}).get("sourceIp")
-        }
+            "ip": event.get("requestContext", {}).get("identity", {}).get("sourceIp"),
+        },
     )
-    
+
     try:
         # Sua lógica aqui
         result = process_request(event, trace_id)
-        
+
         # Log de sucesso
         logger.info(
             "Request completed successfully",
             extra={
                 "trace_id": trace_id,
                 "status_code": 200,
-                "response_size": len(json.dumps(result))
-            }
+                "response_size": len(json.dumps(result)),
+            },
         )
-        
+
         return create_response(200, result, trace_id)
-        
+
     except ValueError as e:
         # Log de erro de validação com contexto
         logger.warning(
@@ -58,11 +58,11 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
                 "trace_id": trace_id,
                 "error_type": "ValidationError",
                 "error_message": str(e),
-                "event_data": event
-            }
+                "event_data": event,
+            },
         )
         return create_response(400, {"error": str(e)}, trace_id)
-        
+
     except Exception as e:
         # Log de erro crítico com stack trace
         logger.error(
@@ -71,9 +71,9 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
                 "trace_id": trace_id,
                 "error_type": type(e).__name__,
                 "error_message": str(e),
-                "event_data": event
+                "event_data": event,
             },
-            exc_info=True  # Inclui stack trace completo
+            exc_info=True,  # Inclui stack trace completo
         )
         return create_response(500, {"error": "Internal server error"}, trace_id)
 
@@ -86,13 +86,13 @@ def process_request(event: Dict[str, Any], trace_id: str) -> Dict[str, Any]:
         extra={
             "trace_id": trace_id,
             "event_keys": list(event.keys()),
-            "body_size": len(str(event.get("body", "")))
-        }
+            "body_size": len(str(event.get("body", ""))),
+        },
     )
-    
+
     if not event:
         raise ValueError("Event cannot be empty")
-    
+
     # Simular processamento com logs intermediários
     body = event.get("body", {})
     if isinstance(body, str):
@@ -101,26 +101,26 @@ def process_request(event: Dict[str, Any], trace_id: str) -> Dict[str, Any]:
         except json.JSONDecodeError:
             logger.warning(
                 "Invalid JSON in request body",
-                extra={"trace_id": trace_id, "raw_body": body}
+                extra={"trace_id": trace_id, "raw_body": body},
             )
             body = {}
-    
+
     # Log de processamento bem-sucedido
     logger.debug(
         "Request processing completed",
         extra={
             "trace_id": trace_id,
             "processed_data_keys": list(body.keys()) if body else [],
-            "environment": os.getenv("ENVIRONMENT", "dev")
-        }
+            "environment": os.getenv("ENVIRONMENT", "dev"),
+        },
     )
-    
+
     # Sua lógica de negócio aqui
     return {
         "message": "Success!",
         "data": body,
         "environment": os.getenv("ENVIRONMENT", "dev"),
-        "trace_id": trace_id
+        "trace_id": trace_id,
     }
 
 
@@ -130,25 +130,26 @@ def create_response(status: int, data: Any, trace_id: str = None) -> Dict[str, A
     if trace_id:
         if isinstance(data, dict):
             data["trace_id"] = trace_id
-    
+
     response = {
         "statusCode": status,
         "headers": {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*",
-            "X-Trace-ID": trace_id or "unknown"  # Header personalizado para rastreamento
+            "X-Trace-ID": trace_id
+            or "unknown",  # Header personalizado para rastreamento
         },
-        "body": json.dumps(data, ensure_ascii=False)
+        "body": json.dumps(data, ensure_ascii=False),
     }
-    
+
     # Log da resposta final
     logger.debug(
         "Response created",
         extra={
             "trace_id": trace_id,
             "status_code": status,
-            "response_headers": response["headers"]
-        }
+            "response_headers": response["headers"],
+        },
     )
-    
+
     return response
